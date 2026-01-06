@@ -1,0 +1,7 @@
+{
+  "name": "Self-Service Kiosk",
+  "description": "A professional-grade self-service kiosk interface for MegaCoffee, optimized for 1080x1920 portrait displays. Features menu browsing, product customization, smart AI recommendations, and a simulated payment flow.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
