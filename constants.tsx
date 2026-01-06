@@ -4,10 +4,10 @@ import { Product } from './types';
 export const PRODUCTS: Product[] = [
   {
     id: 's1',
-    name: '감튀스틱 밀크쉐이크',
+    name: 'French Fries Milkshake',
     englishName: 'French Fries Milkshake',
-    description: '부드럽고 달콤한 밀크쉐이크에 바삭한 감자튀김스틱을 더한 단짠 매력의 겨울시즌 한정 쉐이크',
-    price: 4.50,
+    description: 'Sweet and creamy milkshake topped with crunchy french fry sticks for a perfect sweet-salty combo.',
+    price: 12500,
     category: 'Seasonal Specials',
     image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80',
     calories: 478.2,
@@ -16,10 +16,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 's2',
-    name: '마시멜로스노우 크림초코',
+    name: 'Marshmallow Snow Choco',
     englishName: 'Marshmallow Chocolate',
-    description: '눈처럼 소복하게 쌓인 우유크림 위 바삭뽀득한 마시멜로우가 듬뿍 올라간 달콤한 초코라떼',
-    price: 4.20,
+    description: 'Rich chocolate latte topped with fluffy milk cream and crunchy snow-like marshmallows.',
+    price: 11900,
     category: 'Seasonal Specials',
     image: 'https://images.unsplash.com/photo-1544787210-282d93ad9ecf?auto=format&fit=crop&w=600&q=80',
     calories: 485.4,
@@ -28,10 +28,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'f1',
-    name: '누룽누룽 바삭 프라페',
+    name: 'Nurung-ji Crisp Frappe',
     englishName: 'Nurung-Ji Crisp Frappe',
-    description: '여주쌀로 만든 누룽지를 넣어 달달 꼬소한 프라페 위로 바삭한 누룽지를 올린 가을/겨울 한정 프라페',
-    price: 4.80,
+    description: 'Savory and sweet frappe made with traditional toasted rice, topped with extra crispy rice bits.',
+    price: 13500,
     category: 'Smoothie & Frappe',
     image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=600&q=80',
     calories: 591.3,
@@ -40,10 +40,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'f2',
-    name: '피넛버터 초코 프라페',
+    name: 'Peanut Butter Choco Frappe',
     englishName: 'Peanut Butter Chocolate Frappe',
-    description: '진한 누가초코 프라페에 고소한 피넛버터를 더해 단짠 풍미가 어우러진 프라페',
-    price: 4.80,
+    description: 'Smooth nougat chocolate frappe blended with salty peanut butter for a rich flavor profile.',
+    price: 13500,
     category: 'Smoothie & Frappe',
     image: 'https://images.unsplash.com/photo-1626078436897-9e6e0f2b0124?auto=format&fit=crop&w=600&q=80',
     calories: 639.4,
@@ -52,10 +52,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'j1',
-    name: '메가 비타 팝스무디',
+    name: 'Mega Vita Pop Smoothie',
     englishName: 'Mega Vitamin Pop Smoothie',
-    description: '비타민 7종 함유! 상큼한 오렌지망고와 베리코코넛잼의 에너지 한 잔',
-    price: 3.90,
+    description: 'Packed with 7 vitamins! Refreshing orange-mango with sweet berry coconut jam.',
+    price: 10500,
     category: 'Smoothie & Frappe',
     image: 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?auto=format&fit=crop&w=600&q=80',
     calories: 332.7,
@@ -64,10 +64,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'c1',
-    name: '메가 아메리카노',
+    name: 'Mega Americano',
     englishName: 'Mega Americano',
-    description: '진한 두 샷으로 더 깊고 풍부한 메가MGC커피의 시그니처 커피',
-    price: 2.00,
+    description: 'Deep and rich signature coffee brewed with a premium double shot.',
+    price: 5500,
     category: 'Coffee',
     image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
     calories: 15,
@@ -76,10 +76,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'c2',
-    name: '왕메가카페라떼',
+    name: 'King Mega Cafe Latte',
     englishName: 'BIG MEGA Caffe Latte',
-    description: '부드러운 우유와 진한 에스프레소가 어우러진 대용량 라떼',
-    price: 3.90,
+    description: 'Extra large latte featuring smooth steamed milk and our bold espresso blend.',
+    price: 8500,
     category: 'Coffee',
     image: 'https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&w=600&q=80',
     calories: 269.4,
@@ -88,10 +88,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 't1',
-    name: '제로 체리콜라',
+    name: 'Zero Cherry Cola',
     englishName: 'Cherry Cola Zero',
-    description: '체리의 새콤함과 콜라의 청량감을 즐기는 제로 칼로리 에이드',
-    price: 3.50,
+    description: 'A refreshing zero-calorie ade combining tart cherry with fizzy cola.',
+    price: 7500,
     category: 'Tea & Juice',
     image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
     calories: 7.9,
@@ -100,10 +100,10 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'd1',
-    name: '버터 크로와상',
+    name: 'Butter Croissant',
     englishName: 'Butter Croissant',
-    description: '매일 아침 구워내는 고소하고 담백한 프랑스 정통 크로와상',
-    price: 3.20,
+    description: 'French-style buttery pastry, baked fresh for a flaky and savory treat.',
+    price: 6500,
     category: 'Dessert',
     image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80',
     calories: 340,
@@ -121,15 +121,15 @@ export const CATEGORIES: { name: string; icon: string }[] = [
 
 export const SIZES = [
   { name: 'Small', upcharge: 0, oz: 12 },
-  { name: 'Medium', upcharge: 0.50, oz: 20 },
-  { name: 'Big Mega', upcharge: 1.50, oz: 32 }
+  { name: 'Medium', upcharge: 1500, oz: 20 },
+  { name: 'Big Mega', upcharge: 3000, oz: 32 }
 ];
 
-export const MILK_OPTIONS = ['Normal', 'Skim Milk', 'Oat Milk (+ $0.60)', 'Almond Milk (+ $0.60)'];
+export const MILK_OPTIONS = ['Normal', 'Skim Milk', 'Oat Milk (+ 1,500₮)', 'Almond Milk (+ 1,500₮)'];
 export const SWEETNESS_LEVELS = ['100% (Standard)', '75%', '50%', 'Unsweetened'];
 export const ADD_ONS = [
-  { id: 'esp', name: 'Extra Espresso Shot', price: 0.90 },
-  { id: 'vsy', name: 'Vanilla Syrup', price: 0.50 },
-  { id: 'whc', name: 'Whipped Cream', price: 0.60 },
-  { id: 'ice', name: 'Add Ice Cream', price: 1.00 }
+  { id: 'esp', name: 'Extra Espresso Shot', price: 2500 },
+  { id: 'vsy', name: 'Vanilla Syrup', price: 1500 },
+  { id: 'whc', name: 'Whipped Cream', price: 1800 },
+  { id: 'ice', name: 'Add Ice Cream', price: 3000 }
 ];

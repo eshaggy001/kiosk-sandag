@@ -2,16 +2,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { CartItem, Product } from "../types";
 
-// Initialize lazily or check for key before usage to prevent startup crashes
-const getAiClient = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) return null;
-  return new GoogleGenAI({ apiKey });
-};
+// Always initialize GoogleGenAI with a named parameter for the apiKey from process.env.API_KEY.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getSmartRecommendations = async (cart: CartItem[], allProducts: Product[]) => {
-  const ai = getAiClient();
-  if (!ai) return [];
+  if (!process.env.API_KEY) return [];
 
   const cartNames = cart.map(item => item.name).join(', ');
   const productsList = allProducts.map(p => `${p.name} (${p.category})`).join(', ');
@@ -48,8 +43,7 @@ export const getSmartRecommendations = async (cart: CartItem[], allProducts: Pro
 };
 
 export const getVirtualBaristaHelp = async (query: string) => {
-  const ai = getAiClient();
-  if (!ai) return "I'm sorry, I'm offline right now (API Key missing).";
+  if (!process.env.API_KEY) return "I'm sorry, I'm offline right now.";
 
   try {
     const response = await ai.models.generateContent({
