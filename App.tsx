@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { KioskStep, Product, Category, CartItem, OrderType } from './types';
-import { PRODUCTS, CATEGORIES, SIZES, MILK_OPTIONS, SWEETNESS_LEVELS, ADD_ONS } from './constants';
+import { PRODUCTS as InitialProducts, CATEGORIES as InitialCategories, SIZES as InitialSizes, MILK_OPTIONS as InitialMilkOptions, SWEETNESS_LEVELS as InitialSweetnessLevels, ADD_ONS as InitialAddOns } from './constants';
+import { dataService } from './services/dataService';
 import { getSmartRecommendations, getVirtualBaristaHelp } from './services/geminiService';
 
 // --- Branding Constants ---
@@ -26,14 +27,14 @@ const Icon = ({ name, className }: { name: string; className?: string }) => {
     creditCard: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>,
     qrCode: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>,
     home: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
-    coffeeIcon: <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M18.5 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h13c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2.5-2zM18 19H6V5h12v14zm-5-12h2v10h-2V7zm-4 4h2v6H9v-6z"/></svg>
+    coffeeIcon: <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M18.5 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h13c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2.5-2zM18 19H6V5h12v14zm-5-12h2v10h-2V7zm-4 4h2v6H9v-6z" /></svg>
   };
   return icons[name] || <span>?</span>;
 };
 
 const ProductImage = ({ src, alt, className }: { src: string, alt: string, className: string }) => {
   const [error, setError] = useState(false);
-  
+
   if (error) {
     return (
       <div className={`${className} bg-stone-100 flex flex-col items-center justify-center p-4 text-stone-300`}>
@@ -44,10 +45,10 @@ const ProductImage = ({ src, alt, className }: { src: string, alt: string, class
   }
 
   return (
-    <img 
-      src={src} 
-      alt={alt} 
-      className={className} 
+    <img
+      src={src}
+      alt={alt}
+      className={className}
       onError={() => setError(true)}
     />
   );
@@ -66,7 +67,30 @@ export default function App() {
   const [helpResponse, setHelpResponse] = useState('');
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<{ productName: string; reason: string }[]>([]);
-  
+
+  // Data State
+  const [PRODUCTS, setProducts] = useState<Product[]>(InitialProducts);
+  const [CATEGORIES, setCategories] = useState(InitialCategories);
+  const [SIZES, setSizes] = useState(InitialSizes);
+  const [MILK_OPTIONS, setMilkOptions] = useState(InitialMilkOptions);
+  const [SWEETNESS_LEVELS, setSweetnessLevels] = useState(InitialSweetnessLevels);
+  const [ADD_ONS, setAddOns] = useState(InitialAddOns);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await dataService.getInitialData();
+      if (data) {
+        setProducts(data.products);
+        setCategories(data.categories);
+        setSizes(data.sizes);
+        setMilkOptions(data.milkOptions);
+        setSweetnessLevels(data.sweetnessLevels);
+        setAddOns(data.addOns);
+      }
+    };
+    loadData();
+  }, []);
+
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'CARD' | 'QPAY' | null>(null);
 
@@ -101,7 +125,7 @@ export default function App() {
     } else if (cart.length === 0) {
       setAiRecommendations([]);
     }
-  }, [cart, step]);
+  }, [cart, step, PRODUCTS]);
 
   const addToCart = (product: Product, customization: any) => {
     const newItem: CartItem = {
@@ -141,7 +165,7 @@ export default function App() {
   // --- Views ---
 
   const WelcomeView = () => (
-    <div 
+    <div
       className="h-screen w-screen flex flex-col items-center justify-center bg-yellow-400 cursor-pointer overflow-hidden"
       onClick={() => setStep(KioskStep.ORDER_TYPE)}
     >
@@ -150,11 +174,11 @@ export default function App() {
         <div className="bg-stone-900 px-8 py-4 mb-12 rounded-2xl shadow-2xl">
           <h1 className="text-6xl font-black text-yellow-400 tracking-tighter italic">MEGA COFFEE</h1>
         </div>
-        
+
         <div className="w-80 h-80 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-16 border-4 border-white/30">
-          <img 
-            src="https://img.79plus.co.kr/megahp/common/img/new_logo.png" 
-            className="w-56 h-auto drop-shadow-2xl animate-bounce" 
+          <img
+            src="https://img.79plus.co.kr/megahp/common/img/new_logo.png"
+            className="w-56 h-auto drop-shadow-2xl animate-bounce"
             alt="Mega Coffee"
           />
         </div>
@@ -178,20 +202,20 @@ export default function App() {
   const OrderTypeView = () => (
     <div className="h-screen w-screen bg-white flex flex-col p-12 portrait:p-20 relative">
       <div className="absolute top-12 left-12 portrait:top-20 portrait:left-20">
-        <button 
-          onClick={() => setStep(KioskStep.WELCOME)} 
+        <button
+          onClick={() => setStep(KioskStep.WELCOME)}
           className="bg-stone-50 p-6 rounded-[2rem] shadow-xl hover:bg-stone-100 transition-all active:scale-95 group border border-stone-100"
         >
           <Icon name="back" className="w-10 h-10 text-stone-900 group-hover:scale-110 transition-transform" />
         </button>
       </div>
       <div className="flex flex-col items-center mb-24">
-         <img src="https://img.79plus.co.kr/megahp/common/img/new_logo_b.png" className="w-40 mb-12" />
-         <h2 className="text-6xl font-black text-stone-900 tracking-tight">How would you like to enjoy?</h2>
+        <img src="https://img.79plus.co.kr/megahp/common/img/new_logo_b.png" className="w-40 mb-12" />
+        <h2 className="text-6xl font-black text-stone-900 tracking-tight">How would you like to enjoy?</h2>
       </div>
 
       <div className="flex-1 grid grid-cols-1 gap-12 max-w-4xl mx-auto w-full">
-        <button 
+        <button
           onClick={() => { setOrderType('Eat In'); setStep(KioskStep.MENU); }}
           className="group relative bg-stone-50 rounded-[4rem] p-16 shadow-2xl hover:bg-yellow-400 transition-all duration-500 overflow-hidden"
         >
@@ -205,7 +229,7 @@ export default function App() {
           </div>
         </button>
 
-        <button 
+        <button
           onClick={() => { setOrderType('Take Out'); setStep(KioskStep.MENU); }}
           className="group relative bg-stone-50 rounded-[4rem] p-16 shadow-2xl hover:bg-yellow-400 transition-all duration-500 overflow-hidden"
         >
@@ -224,7 +248,7 @@ export default function App() {
 
   const MenuView = () => {
     const filteredProducts = PRODUCTS.filter(p => p.category === selectedCategory);
-    
+
     return (
       <div className="h-screen w-screen flex flex-col bg-white overflow-hidden font-sans">
         <header className="bg-yellow-400 px-8 py-8 shadow-md flex items-center justify-between z-20">
@@ -237,8 +261,8 @@ export default function App() {
               <p className="text-stone-800 font-bold text-sm tracking-widest">{orderType?.toUpperCase()}</p>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={resetOrder}
             className="flex items-center gap-3 bg-stone-900 text-white px-8 py-4 rounded-2xl font-black text-xl shadow-xl active:scale-95 transition-all"
           >
@@ -272,7 +296,7 @@ export default function App() {
 
             <div className="grid grid-cols-3 gap-8">
               {filteredProducts.map(product => (
-                <div 
+                <div
                   key={product.id}
                   onClick={() => setActiveProduct(product)}
                   className="bg-stone-50 rounded-[3rem] overflow-hidden group hover:ring-8 hover:ring-yellow-400/30 transition-all duration-300 cursor-pointer shadow-md border border-stone-100 flex flex-col"
@@ -312,7 +336,7 @@ export default function App() {
                     const recProduct = PRODUCTS.find(p => p.name === rec.productName || p.englishName === rec.productName);
                     if (!recProduct) return null;
                     return (
-                      <div 
+                      <div
                         key={idx}
                         onClick={() => setActiveProduct(recProduct)}
                         className="bg-yellow-50 min-w-[500px] p-8 rounded-[3rem] shadow-xl border-4 border-yellow-100 flex gap-8 snap-center hover:scale-[1.02] transition-transform cursor-pointer"
@@ -347,15 +371,15 @@ export default function App() {
               <p className="text-6xl font-black text-yellow-400 tracking-tighter italic">{formatPrice(cartTotal)}</p>
             </div>
           </div>
-          
+
           <div className="flex gap-6">
-            <button 
+            <button
               onClick={resetOrder}
               className="px-10 py-6 rounded-2xl text-2xl font-black text-white/50 uppercase tracking-widest hover:text-white transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               disabled={cart.length === 0}
               onClick={() => setStep(KioskStep.CHECKOUT)}
               className={`px-24 py-6 rounded-[2rem] text-3xl font-black transition-all duration-300 flex items-center gap-4 ${cart.length > 0 ? 'bg-yellow-400 text-stone-900 shadow-[0_0_50px_rgba(253,208,0,0.3)] hover:scale-105 active:scale-95' : 'bg-stone-800 text-stone-600 cursor-not-allowed'}`}
@@ -371,7 +395,7 @@ export default function App() {
 
   const CustomizationModal = () => {
     if (!activeProduct) return null;
-    
+
     const [size, setSize] = useState('Medium');
     const [milk, setMilk] = useState('Normal');
     const [sweetness, setSweetness] = useState('100% (Standard)');
@@ -527,44 +551,44 @@ export default function App() {
     return (
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-stone-900/90 backdrop-blur-xl animate-fade-in px-12">
         <div className="bg-white w-full max-w-4xl rounded-[4rem] p-16 shadow-2xl animate-slide-up flex flex-col gap-12 relative overflow-hidden">
-           <div className="absolute -top-32 -left-32 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl" />
-           <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-stone-900/5 rounded-full blur-3xl" />
-           <div className="text-center">
-              <h2 className="text-6xl font-black text-stone-900 mb-4 tracking-tighter">SELECT PAYMENT</h2>
-              <p className="text-2xl text-stone-400 font-bold uppercase tracking-widest">Choose your preferred method</p>
-           </div>
-           <div className="grid grid-cols-2 gap-8 mt-4">
-              <button 
-                onClick={() => handlePaymentSelect('CARD')}
-                className="group p-12 bg-stone-50 border-4 border-stone-100 rounded-[3rem] hover:border-yellow-400 hover:bg-yellow-50 transition-all duration-300 flex flex-col items-center gap-8 shadow-xl active:scale-95"
-              >
-                <div className="w-32 h-32 bg-stone-900 rounded-[1.5rem] flex items-center justify-center group-hover:bg-yellow-400 transition-colors shadow-lg">
-                   <Icon name="creditCard" className="w-16 h-16 text-yellow-400 group-hover:text-stone-900" />
-                </div>
-                <div className="text-center">
-                   <span className="text-4xl font-black text-stone-900 block mb-2">Pay by card</span>
-                   <p className="text-lg text-stone-400 font-bold">Visa, MasterCard, etc.</p>
-                </div>
-              </button>
-              <button 
-                onClick={() => handlePaymentSelect('QPAY')}
-                className="group p-12 bg-stone-50 border-4 border-stone-100 rounded-[3rem] hover:border-yellow-400 hover:bg-yellow-50 transition-all duration-300 flex flex-col items-center gap-8 shadow-xl active:scale-95"
-              >
-                <div className="w-32 h-32 bg-stone-900 rounded-[1.5rem] flex items-center justify-center group-hover:bg-yellow-400 transition-colors shadow-lg">
-                   <Icon name="qrCode" className="w-16 h-16 text-yellow-400 group-hover:text-stone-900" />
-                </div>
-                <div className="text-center">
-                   <span className="text-4xl font-black text-stone-900 block mb-2">Pay via QPay</span>
-                   <p className="text-lg text-stone-400 font-bold">Scan bank QR code</p>
-                </div>
-              </button>
-           </div>
-           <button 
-             onClick={() => setIsPaymentMethodModalOpen(false)}
-             className="mt-4 w-full py-6 text-stone-400 font-black text-xl hover:text-stone-900 transition-colors uppercase tracking-widest"
-           >
-             Go Back
-           </button>
+          <div className="absolute -top-32 -left-32 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-stone-900/5 rounded-full blur-3xl" />
+          <div className="text-center">
+            <h2 className="text-6xl font-black text-stone-900 mb-4 tracking-tighter">SELECT PAYMENT</h2>
+            <p className="text-2xl text-stone-400 font-bold uppercase tracking-widest">Choose your preferred method</p>
+          </div>
+          <div className="grid grid-cols-2 gap-8 mt-4">
+            <button
+              onClick={() => handlePaymentSelect('CARD')}
+              className="group p-12 bg-stone-50 border-4 border-stone-100 rounded-[3rem] hover:border-yellow-400 hover:bg-yellow-50 transition-all duration-300 flex flex-col items-center gap-8 shadow-xl active:scale-95"
+            >
+              <div className="w-32 h-32 bg-stone-900 rounded-[1.5rem] flex items-center justify-center group-hover:bg-yellow-400 transition-colors shadow-lg">
+                <Icon name="creditCard" className="w-16 h-16 text-yellow-400 group-hover:text-stone-900" />
+              </div>
+              <div className="text-center">
+                <span className="text-4xl font-black text-stone-900 block mb-2">Pay by card</span>
+                <p className="text-lg text-stone-400 font-bold">Visa, MasterCard, etc.</p>
+              </div>
+            </button>
+            <button
+              onClick={() => handlePaymentSelect('QPAY')}
+              className="group p-12 bg-stone-50 border-4 border-stone-100 rounded-[3rem] hover:border-yellow-400 hover:bg-yellow-50 transition-all duration-300 flex flex-col items-center gap-8 shadow-xl active:scale-95"
+            >
+              <div className="w-32 h-32 bg-stone-900 rounded-[1.5rem] flex items-center justify-center group-hover:bg-yellow-400 transition-colors shadow-lg">
+                <Icon name="qrCode" className="w-16 h-16 text-yellow-400 group-hover:text-stone-900" />
+              </div>
+              <div className="text-center">
+                <span className="text-4xl font-black text-stone-900 block mb-2">Pay via QPay</span>
+                <p className="text-lg text-stone-400 font-bold">Scan bank QR code</p>
+              </div>
+            </button>
+          </div>
+          <button
+            onClick={() => setIsPaymentMethodModalOpen(false)}
+            className="mt-4 w-full py-6 text-stone-400 font-black text-xl hover:text-stone-900 transition-colors uppercase tracking-widest"
+          >
+            Go Back
+          </button>
         </div>
       </div>
     );
@@ -572,7 +596,7 @@ export default function App() {
 
   const CheckoutView = () => (
     <div className="h-screen w-screen flex flex-col bg-stone-50 p-12 portrait:p-20 overflow-hidden font-sans">
-       <div className="flex justify-between items-center mb-16">
+      <div className="flex justify-between items-center mb-16">
         <button onClick={() => setStep(KioskStep.MENU)} className="bg-white p-6 rounded-3xl shadow-xl">
           <Icon name="back" className="w-10 h-10 text-stone-900" />
         </button>
@@ -594,8 +618,8 @@ export default function App() {
                   <div>
                     <h3 className="text-4xl font-black text-stone-900 mb-2">{item.name}</h3>
                     <div className="flex flex-wrap gap-2">
-                       <span className="bg-yellow-400 text-stone-900 px-4 py-1 rounded-lg text-sm font-black uppercase tracking-widest">{item.size}</span>
-                       <span className="bg-stone-900 text-yellow-400 px-4 py-1 rounded-lg text-sm font-black uppercase tracking-widest">{item.customizations.milk}</span>
+                      <span className="bg-yellow-400 text-stone-900 px-4 py-1 rounded-lg text-sm font-black uppercase tracking-widest">{item.size}</span>
+                      <span className="bg-stone-900 text-yellow-400 px-4 py-1 rounded-lg text-sm font-black uppercase tracking-widest">{item.customizations.milk}</span>
                     </div>
                   </div>
                   <button onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))} className="p-4 bg-red-50 text-red-400 rounded-full hover:bg-red-500 hover:text-white transition-all">
@@ -604,9 +628,9 @@ export default function App() {
                 </div>
                 <div className="mt-8 flex justify-between items-center">
                   <div className="flex items-center gap-10 bg-stone-50 rounded-2xl p-4 px-8 border-2 border-stone-100">
-                    <button onClick={() => item.quantity > 1 && setCart(prev => prev.map(i => i.id === item.id ? {...i, quantity: i.quantity - 1} : i))} className="text-4xl font-black text-stone-300 hover:text-stone-900">-</button>
+                    <button onClick={() => item.quantity > 1 && setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i))} className="text-4xl font-black text-stone-300 hover:text-stone-900">-</button>
                     <span className="text-4xl font-black text-stone-900">{item.quantity}</span>
-                    <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? {...i, quantity: i.quantity + 1} : i))} className="text-4xl font-black text-stone-300 hover:text-stone-900">+</button>
+                    <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i))} className="text-4xl font-black text-stone-300 hover:text-stone-900">+</button>
                   </div>
                   <span className="text-5xl font-black text-stone-900 italic tracking-tighter">{formatPrice(item.price * item.quantity)}</span>
                 </div>
@@ -614,41 +638,41 @@ export default function App() {
             </div>
           ))}
           {cart.length === 0 && (
-             <div className="h-full flex flex-col items-center justify-center opacity-10 py-32">
-                <Icon name="cart" className="w-64 h-64 mb-12" />
-                <p className="text-7xl font-black uppercase italic">Basket Empty</p>
-             </div>
+            <div className="h-full flex flex-col items-center justify-center opacity-10 py-32">
+              <Icon name="cart" className="w-64 h-64 mb-12" />
+              <p className="text-7xl font-black uppercase italic">Basket Empty</p>
+            </div>
           )}
         </div>
         <div className="w-full">
-           <div className="bg-stone-900 rounded-[4rem] p-12 shadow-2xl flex flex-col relative overflow-hidden">
-              <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
-              <div className="flex justify-between items-center mb-10 border-b-2 border-white/10 pb-8">
-                <h3 className="text-4xl font-black text-white italic tracking-tighter uppercase">Order Summary</h3>
-                <div className="flex flex-col items-end">
-                  <span className="text-sm font-black text-white/40 uppercase tracking-[0.4em] mb-1">Final Total</span>
-                  <span className="text-7xl font-black text-yellow-400 italic tracking-tighter leading-none">{formatPrice(Math.round(cartTotal * 1.1))}</span>
+          <div className="bg-stone-900 rounded-[4rem] p-12 shadow-2xl flex flex-col relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+            <div className="flex justify-between items-center mb-10 border-b-2 border-white/10 pb-8">
+              <h3 className="text-4xl font-black text-white italic tracking-tighter uppercase">Order Summary</h3>
+              <div className="flex flex-col items-end">
+                <span className="text-sm font-black text-white/40 uppercase tracking-[0.4em] mb-1">Final Total</span>
+                <span className="text-7xl font-black text-yellow-400 italic tracking-tighter leading-none">{formatPrice(Math.round(cartTotal * 1.1))}</span>
+              </div>
+            </div>
+            <div className="flex gap-12 items-center">
+              <div className="flex-1 space-y-3">
+                <div className="flex justify-between text-2xl font-bold text-white/30">
+                  <span>Subtotal</span>
+                  <span className="text-white/60">{formatPrice(cartTotal)}</span>
+                </div>
+                <div className="flex justify-between text-2xl font-bold text-white/30">
+                  <span>Tax (10%)</span>
+                  <span className="text-white/60">{formatPrice(Math.round(cartTotal * 0.1))}</span>
                 </div>
               </div>
-              <div className="flex gap-12 items-center">
-                <div className="flex-1 space-y-3">
-                  <div className="flex justify-between text-2xl font-bold text-white/30">
-                    <span>Subtotal</span>
-                    <span className="text-white/60">{formatPrice(cartTotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-2xl font-bold text-white/30">
-                    <span>Tax (10%)</span>
-                    <span className="text-white/60">{formatPrice(Math.round(cartTotal * 0.1))}</span>
-                  </div>
+              <button disabled={cart.length === 0} onClick={() => setIsPaymentMethodModalOpen(true)} className="px-20 py-8 bg-yellow-400 text-stone-900 rounded-[2.5rem] text-3xl font-black shadow-[0_20px_60px_rgba(253,208,0,0.4)] hover:bg-yellow-500 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-6">
+                MAKE PAYMENT
+                <div className="w-10 h-10 bg-stone-900/10 rounded-xl flex items-center justify-center">
+                  <Icon name="chevronLeft" className="w-6 h-6 rotate-180" />
                 </div>
-                <button disabled={cart.length === 0} onClick={() => setIsPaymentMethodModalOpen(true)} className="px-20 py-8 bg-yellow-400 text-stone-900 rounded-[2.5rem] text-3xl font-black shadow-[0_20px_60px_rgba(253,208,0,0.4)] hover:bg-yellow-500 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-6">
-                  MAKE PAYMENT
-                  <div className="w-10 h-10 bg-stone-900/10 rounded-xl flex items-center justify-center">
-                    <Icon name="chevronLeft" className="w-6 h-6 rotate-180" />
-                  </div>
-                </button>
-              </div>
-           </div>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -665,7 +689,7 @@ export default function App() {
         <div className="absolute inset-0 bg-yellow-400/5 -z-10" />
         <div className="mb-24 space-y-6">
           <div className="bg-yellow-400 w-32 h-32 rounded-[2rem] flex items-center justify-center mx-auto mb-12 animate-bounce-short shadow-xl">
-             <Icon name={isCard ? "creditCard" : "qrCode"} className="w-16 h-16 text-stone-900" />
+            <Icon name={isCard ? "creditCard" : "qrCode"} className="w-16 h-16 text-stone-900" />
           </div>
           <h2 className="text-7xl font-black text-stone-900 tracking-tighter italic uppercase">
             {isCard ? 'Waiting for card...' : 'Scan to pay'}
@@ -678,16 +702,16 @@ export default function App() {
           <div className="relative w-96 h-[600px] bg-stone-900 rounded-[4rem] border-[12px] border-stone-800 shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col items-center p-12 overflow-hidden animate-slide-up">
             <div className="w-24 h-3 bg-stone-800 rounded-full mb-16" />
             <div className="w-full bg-stone-800/50 rounded-3xl p-10 flex flex-col items-center justify-center border-2 border-white/5 h-64 shadow-inner">
-               <div className="w-20 h-20 border-8 border-yellow-400 border-t-transparent rounded-full animate-spin mb-8" />
-               <p className="text-yellow-400 font-black tracking-[0.3em] text-2xl animate-pulse uppercase italic">Verifying</p>
+              <div className="w-20 h-20 border-8 border-yellow-400 border-t-transparent rounded-full animate-spin mb-8" />
+              <p className="text-yellow-400 font-black tracking-[0.3em] text-2xl animate-pulse uppercase italic">Verifying</p>
             </div>
             <div className="mt-20 w-full flex flex-col gap-6 opacity-30">
-               <div className="h-4 bg-stone-700 rounded-full w-full" />
-               <div className="h-4 bg-stone-700 rounded-full w-3/4" />
+              <div className="h-4 bg-stone-700 rounded-full w-full" />
+              <div className="h-4 bg-stone-700 rounded-full w-3/4" />
             </div>
             <div className="absolute bottom-16 flex gap-3">
-               <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-               <div className="w-3 h-3 bg-green-500 rounded-full" />
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
+              <div className="w-3 h-3 bg-green-500 rounded-full" />
             </div>
           </div>
         ) : (
@@ -701,8 +725,8 @@ export default function App() {
           </div>
         )}
         <div className="mt-24 flex gap-12 items-center opacity-40">
-           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" className="h-8 object-contain" />
-           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/MasterCard_Logo.svg/2560px-MasterCard_Logo.svg.png" className="h-12 object-contain" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" className="h-8 object-contain" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/MasterCard_Logo.svg/2560px-MasterCard_Logo.svg.png" className="h-12 object-contain" />
         </div>
         <button onClick={() => setStep(KioskStep.CHECKOUT)} className="mt-16 text-stone-300 font-black uppercase tracking-widest text-xl hover:text-stone-900">Cancel Payment</button>
       </div>
@@ -723,12 +747,12 @@ export default function App() {
         <h1 className="text-9xl font-black mb-6 tracking-tighter italic">YEAH! MEGA ORDER!</h1>
         <p className="text-4xl font-bold mb-24 opacity-80 uppercase tracking-tight">Your fresh coffee is being prepared now.</p>
         <div className="bg-white text-stone-900 p-20 rounded-[5rem] shadow-[0_50px_100px_rgba(0,0,0,0.1)] w-full max-w-2xl transform hover:scale-[1.02] transition-transform">
-           <p className="text-stone-300 font-black uppercase tracking-[0.5em] mb-8 text-2xl">Your Ticket Number</p>
-           <div className="text-[15rem] font-black leading-none mb-12 tracking-tighter italic text-stone-900">#{orderNum}</div>
-           <div className="border-t-8 border-dotted border-stone-50 pt-12">
-              <p className="text-3xl text-stone-400 font-bold mb-12">Grab your receipt below!</p>
-              <button onClick={resetOrder} className="w-full py-10 bg-stone-900 text-yellow-400 rounded-[3rem] text-4xl font-black shadow-2xl hover:scale-95 transition-all">CLOSE & FINISH</button>
-           </div>
+          <p className="text-stone-300 font-black uppercase tracking-[0.5em] mb-8 text-2xl">Your Ticket Number</p>
+          <div className="text-[15rem] font-black leading-none mb-12 tracking-tighter italic text-stone-900">#{orderNum}</div>
+          <div className="border-t-8 border-dotted border-stone-50 pt-12">
+            <p className="text-3xl text-stone-400 font-bold mb-12">Grab your receipt below!</p>
+            <button onClick={resetOrder} className="w-full py-10 bg-stone-900 text-yellow-400 rounded-[3rem] text-4xl font-black shadow-2xl hover:scale-95 transition-all">CLOSE & FINISH</button>
+          </div>
         </div>
       </div>
     );
