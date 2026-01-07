@@ -25,8 +25,32 @@ const Icon = ({ name, className }: { name: string; className?: string }) => {
     back: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
     creditCard: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>,
     qrCode: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>,
+    home: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+    coffeeIcon: <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M18.5 3H6c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h13c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2.5-2zM18 19H6V5h12v14zm-5-12h2v10h-2V7zm-4 4h2v6H9v-6z"/></svg>
   };
   return icons[name] || <span>?</span>;
+};
+
+const ProductImage = ({ src, alt, className }: { src: string, alt: string, className: string }) => {
+  const [error, setError] = useState(false);
+  
+  if (error) {
+    return (
+      <div className={`${className} bg-stone-100 flex flex-col items-center justify-center p-4 text-stone-300`}>
+        <Icon name="coffeeIcon" className="w-16 h-16 opacity-20 mb-2" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-center">{alt}</span>
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt={alt} 
+      className={className} 
+      onError={() => setError(true)}
+    />
+  );
 };
 
 // --- Main App ---
@@ -43,22 +67,27 @@ export default function App() {
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<{ productName: string; reason: string }[]>([]);
   
-  // New state for payment flow
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'CARD' | 'QPAY' | null>(null);
 
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
 
+  const resetOrder = () => {
+    setCart([]);
+    setStep(KioskStep.WELCOME);
+    setOrderType(null);
+    setIsPaymentMethodModalOpen(false);
+    setPaymentMethod(null);
+    setIsHelpOpen(false);
+    setActiveProduct(null);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (step !== KioskStep.WELCOME) {
-        setStep(KioskStep.WELCOME);
-        setCart([]);
-        setOrderType(null);
-        setIsPaymentMethodModalOpen(false);
-        setPaymentMethod(null);
+        resetOrder();
       }
-    }, 180000); // 3 minutes for kiosk
+    }, 180000);
     return () => clearTimeout(timer);
   }, [step]);
 
@@ -198,7 +227,6 @@ export default function App() {
     
     return (
       <div className="h-screen w-screen flex flex-col bg-white overflow-hidden font-sans">
-        {/* Header - Mega Branded */}
         <header className="bg-yellow-400 px-8 py-8 shadow-md flex items-center justify-between z-20">
           <div className="flex items-center gap-6">
             <button onClick={() => setStep(KioskStep.ORDER_TYPE)} className="bg-stone-900 text-yellow-400 p-4 rounded-2xl shadow-lg">
@@ -211,16 +239,15 @@ export default function App() {
           </div>
           
           <button 
-            onClick={() => setIsHelpOpen(true)}
+            onClick={resetOrder}
             className="flex items-center gap-3 bg-stone-900 text-white px-8 py-4 rounded-2xl font-black text-xl shadow-xl active:scale-95 transition-all"
           >
-            <Icon name="help" className="w-8 h-8 text-yellow-400" />
-            AI BARISTA
+            <Icon name="home" className="w-8 h-8 text-yellow-400" />
+            ШИНЭЭР ЭХЛЭХ
           </button>
         </header>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar Nav */}
           <nav className="w-36 bg-stone-50 border-r border-stone-100 flex flex-col py-10 gap-12 overflow-y-auto">
             {CATEGORIES.map(cat => (
               <button
@@ -237,7 +264,6 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Main Grid */}
           <main className="flex-1 p-8 overflow-y-auto bg-white">
             <div className="flex items-end justify-between mb-8">
               <h2 className="text-6xl font-black text-stone-900 tracking-tighter">{selectedCategory}</h2>
@@ -252,7 +278,7 @@ export default function App() {
                   className="bg-stone-50 rounded-[3rem] overflow-hidden group hover:ring-8 hover:ring-yellow-400/30 transition-all duration-300 cursor-pointer shadow-md border border-stone-100 flex flex-col"
                 >
                   <div className="relative h-[24rem] overflow-hidden bg-stone-100">
-                    <img src={product.image} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" alt={product.name} />
+                    <ProductImage src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
                     {product.temperature !== 'BOTH' && (
                       <span className={`absolute top-6 left-6 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ${product.temperature === 'ICE' ? 'bg-blue-500 text-white' : 'bg-red-500 text-white shadow-xl'}`}>
                         {product.temperature}
@@ -291,7 +317,7 @@ export default function App() {
                         onClick={() => setActiveProduct(recProduct)}
                         className="bg-yellow-50 min-w-[500px] p-8 rounded-[3rem] shadow-xl border-4 border-yellow-100 flex gap-8 snap-center hover:scale-[1.02] transition-transform cursor-pointer"
                       >
-                        <img src={recProduct.image} className="w-32 h-32 rounded-[2rem] object-cover shadow-lg" alt={recProduct.name} />
+                        <ProductImage src={recProduct.image} alt={recProduct.name} className="w-32 h-32 rounded-[2rem] object-cover shadow-lg" />
                         <div className="flex-1">
                           <h4 className="text-2xl font-black text-stone-900">{recProduct.name}</h4>
                           <p className="text-lg text-stone-600 font-medium italic mt-2">"{rec.reason}"</p>
@@ -324,7 +350,7 @@ export default function App() {
           
           <div className="flex gap-6">
             <button 
-              onClick={() => { setCart([]); setStep(KioskStep.WELCOME); }}
+              onClick={resetOrder}
               className="px-10 py-6 rounded-2xl text-2xl font-black text-white/50 uppercase tracking-widest hover:text-white transition-colors"
             >
               Cancel
@@ -362,7 +388,7 @@ export default function App() {
           <div className="flex justify-between items-start">
             <div className="flex gap-10">
               <div className="relative">
-                <img src={activeProduct.image} className="w-56 h-56 rounded-[3rem] object-cover shadow-2xl ring-8 ring-stone-50" />
+                <ProductImage src={activeProduct.image} alt={activeProduct.name} className="w-56 h-56 rounded-[3rem] object-cover shadow-2xl ring-8 ring-stone-50" />
                 <div className={`absolute -bottom-4 -right-4 w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-xl ${temp === 'ICE' ? 'bg-blue-500' : 'bg-red-500'}`}>
                   {temp === 'ICE' ? '🧊' : '🔥'}
                 </div>
@@ -498,19 +524,15 @@ export default function App() {
 
   const PaymentMethodModal = () => {
     if (!isPaymentMethodModalOpen) return null;
-
     return (
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-stone-900/90 backdrop-blur-xl animate-fade-in px-12">
         <div className="bg-white w-full max-w-4xl rounded-[4rem] p-16 shadow-2xl animate-slide-up flex flex-col gap-12 relative overflow-hidden">
-           {/* Background branding */}
            <div className="absolute -top-32 -left-32 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl" />
            <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-stone-900/5 rounded-full blur-3xl" />
-
            <div className="text-center">
               <h2 className="text-6xl font-black text-stone-900 mb-4 tracking-tighter">SELECT PAYMENT</h2>
               <p className="text-2xl text-stone-400 font-bold uppercase tracking-widest">Choose your preferred method</p>
            </div>
-
            <div className="grid grid-cols-2 gap-8 mt-4">
               <button 
                 onClick={() => handlePaymentSelect('CARD')}
@@ -524,7 +546,6 @@ export default function App() {
                    <p className="text-lg text-stone-400 font-bold">Visa, MasterCard, etc.</p>
                 </div>
               </button>
-
               <button 
                 onClick={() => handlePaymentSelect('QPAY')}
                 className="group p-12 bg-stone-50 border-4 border-stone-100 rounded-[3rem] hover:border-yellow-400 hover:bg-yellow-50 transition-all duration-300 flex flex-col items-center gap-8 shadow-xl active:scale-95"
@@ -538,7 +559,6 @@ export default function App() {
                 </div>
               </button>
            </div>
-
            <button 
              onClick={() => setIsPaymentMethodModalOpen(false)}
              className="mt-4 w-full py-6 text-stone-400 font-black text-xl hover:text-stone-900 transition-colors uppercase tracking-widest"
@@ -559,13 +579,12 @@ export default function App() {
         <h2 className="text-7xl font-black text-stone-900 tracking-tighter">Your Order Details</h2>
         <div className="w-20" />
       </div>
-
       <div className="flex-1 flex flex-col gap-10 overflow-hidden">
         <div className="flex-1 overflow-y-auto pr-6 space-y-8 no-scrollbar">
           {cart.map(item => (
             <div key={item.id} className="bg-white rounded-[3rem] p-10 flex gap-10 shadow-xl border border-stone-100 animate-fade-in">
               <div className="relative">
-                <img src={item.image} className="w-40 h-40 rounded-[2rem] object-cover shadow-lg" alt={item.name} />
+                <ProductImage src={item.image} alt={item.name} className="w-40 h-40 rounded-[2rem] object-cover shadow-lg" />
                 <div className={`absolute -top-4 -left-4 w-12 h-12 rounded-xl flex items-center justify-center font-black text-white shadow-lg ${item.temperature === 'ICE' ? 'bg-blue-500' : 'bg-red-500'}`}>
                   {item.temperature === 'ICE' ? '🧊' : '🔥'}
                 </div>
@@ -579,25 +598,15 @@ export default function App() {
                        <span className="bg-stone-900 text-yellow-400 px-4 py-1 rounded-lg text-sm font-black uppercase tracking-widest">{item.customizations.milk}</span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))}
-                    className="p-4 bg-red-50 text-red-400 rounded-full hover:bg-red-500 hover:text-white transition-all"
-                  >
+                  <button onClick={() => setCart(prev => prev.filter(i => i.id !== item.id))} className="p-4 bg-red-50 text-red-400 rounded-full hover:bg-red-500 hover:text-white transition-all">
                     <Icon name="x" className="w-8 h-8" />
                   </button>
                 </div>
-                
                 <div className="mt-8 flex justify-between items-center">
                   <div className="flex items-center gap-10 bg-stone-50 rounded-2xl p-4 px-8 border-2 border-stone-100">
-                    <button onClick={() => {
-                      if (item.quantity > 1) {
-                         setCart(prev => prev.map(i => i.id === item.id ? {...i, quantity: i.quantity - 1} : i));
-                      }
-                    }} className="text-4xl font-black text-stone-300 hover:text-stone-900">-</button>
+                    <button onClick={() => item.quantity > 1 && setCart(prev => prev.map(i => i.id === item.id ? {...i, quantity: i.quantity - 1} : i))} className="text-4xl font-black text-stone-300 hover:text-stone-900">-</button>
                     <span className="text-4xl font-black text-stone-900">{item.quantity}</span>
-                    <button onClick={() => {
-                       setCart(prev => prev.map(i => i.id === item.id ? {...i, quantity: i.quantity + 1} : i));
-                    }} className="text-4xl font-black text-stone-300 hover:text-stone-900">+</button>
+                    <button onClick={() => setCart(prev => prev.map(i => i.id === item.id ? {...i, quantity: i.quantity + 1} : i))} className="text-4xl font-black text-stone-300 hover:text-stone-900">+</button>
                   </div>
                   <span className="text-5xl font-black text-stone-900 italic tracking-tighter">{formatPrice(item.price * item.quantity)}</span>
                 </div>
@@ -611,7 +620,6 @@ export default function App() {
              </div>
           )}
         </div>
-
         <div className="w-full">
            <div className="bg-stone-900 rounded-[4rem] p-12 shadow-2xl flex flex-col relative overflow-hidden">
               <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
@@ -622,7 +630,6 @@ export default function App() {
                   <span className="text-7xl font-black text-yellow-400 italic tracking-tighter leading-none">{formatPrice(Math.round(cartTotal * 1.1))}</span>
                 </div>
               </div>
-              
               <div className="flex gap-12 items-center">
                 <div className="flex-1 space-y-3">
                   <div className="flex justify-between text-2xl font-bold text-white/30">
@@ -634,12 +641,7 @@ export default function App() {
                     <span className="text-white/60">{formatPrice(Math.round(cartTotal * 0.1))}</span>
                   </div>
                 </div>
-                
-                <button 
-                  disabled={cart.length === 0}
-                  onClick={() => setIsPaymentMethodModalOpen(true)}
-                  className="px-20 py-8 bg-yellow-400 text-stone-900 rounded-[2.5rem] text-3xl font-black shadow-[0_20px_60px_rgba(253,208,0,0.4)] hover:bg-yellow-500 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-6"
-                >
+                <button disabled={cart.length === 0} onClick={() => setIsPaymentMethodModalOpen(true)} className="px-20 py-8 bg-yellow-400 text-stone-900 rounded-[2.5rem] text-3xl font-black shadow-[0_20px_60px_rgba(253,208,0,0.4)] hover:bg-yellow-500 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-6">
                   MAKE PAYMENT
                   <div className="w-10 h-10 bg-stone-900/10 rounded-xl flex items-center justify-center">
                     <Icon name="chevronLeft" className="w-6 h-6 rotate-180" />
@@ -654,15 +656,10 @@ export default function App() {
 
   const PaymentView = () => {
     useEffect(() => {
-      // Simulate payment success after 4s
-      const timer = setTimeout(() => {
-        setStep(KioskStep.SUCCESS);
-      }, 5000);
+      const timer = setTimeout(() => setStep(KioskStep.SUCCESS), 5000);
       return () => clearTimeout(timer);
     }, []);
-
     const isCard = paymentMethod === 'CARD';
-
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-white p-20 text-center font-sans overflow-hidden">
         <div className="absolute inset-0 bg-yellow-400/5 -z-10" />
@@ -677,9 +674,7 @@ export default function App() {
             {isCard ? 'Please tap your card or use mobile pay' : 'Open your bank app and scan the QR code'}
           </p>
         </div>
-        
         {isCard ? (
-          /* Modern Kiosk Terminal Mockup */
           <div className="relative w-96 h-[600px] bg-stone-900 rounded-[4rem] border-[12px] border-stone-800 shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col items-center p-12 overflow-hidden animate-slide-up">
             <div className="w-24 h-3 bg-stone-800 rounded-full mb-16" />
             <div className="w-full bg-stone-800/50 rounded-3xl p-10 flex flex-col items-center justify-center border-2 border-white/5 h-64 shadow-inner">
@@ -696,50 +691,30 @@ export default function App() {
             </div>
           </div>
         ) : (
-          /* QPay QR Code Simulation */
           <div className="flex flex-col items-center gap-12">
             <div className="bg-white p-12 rounded-[3rem] shadow-[0_30px_80px_rgba(0,0,0,0.1)] border-8 border-stone-50 animate-fade-in">
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=MEGACOFFEE_ORDER_123&bgcolor=ffffff&color=231f20" 
-                className="w-80 h-80 rounded-2xl grayscale contrast-125" 
-                alt="Payment QR" 
-              />
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=MEGACOFFEE_ORDER_123&bgcolor=ffffff&color=231f20" className="w-80 h-80 rounded-2xl grayscale contrast-125" alt="Payment QR" />
             </div>
             <div className="bg-stone-900 text-yellow-400 px-12 py-6 rounded-full text-4xl font-black italic tracking-tighter shadow-xl animate-pulse">
               {formatPrice(Math.round(cartTotal * 1.1))}
             </div>
           </div>
         )}
-
         <div className="mt-24 flex gap-12 items-center opacity-40">
            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" className="h-8 object-contain" />
            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/MasterCard_Logo.svg/2560px-MasterCard_Logo.svg.png" className="h-12 object-contain" />
-           {isCard && <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Pay_logo.svg/2560px-Apple_Pay_logo.svg.png" className="h-10 object-contain" />}
-           {!isCard && <div className="text-2xl font-black text-stone-900 italic tracking-tighter">QPAY SECURE</div>}
         </div>
-        
-        <button 
-          onClick={() => setStep(KioskStep.CHECKOUT)} 
-          className="mt-16 text-stone-300 font-black uppercase tracking-widest text-xl hover:text-stone-900"
-        >
-          Cancel Payment
-        </button>
+        <button onClick={() => setStep(KioskStep.CHECKOUT)} className="mt-16 text-stone-300 font-black uppercase tracking-widest text-xl hover:text-stone-900">Cancel Payment</button>
       </div>
     );
   };
 
   const SuccessView = () => {
     const orderNum = useMemo(() => Math.floor(Math.random() * 900) + 100, []);
-    
     useEffect(() => {
-      const timer = setTimeout(() => {
-        setCart([]);
-        setStep(KioskStep.WELCOME);
-        setPaymentMethod(null);
-      }, 15000);
+      const timer = setTimeout(() => resetOrder(), 15000);
       return () => clearTimeout(timer);
     }, []);
-
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-yellow-400 text-stone-900 p-12 text-center animate-fade-in font-sans">
         <div className="bg-stone-900 p-16 rounded-[4rem] mb-16 shadow-2xl scale-110">
@@ -747,25 +722,12 @@ export default function App() {
         </div>
         <h1 className="text-9xl font-black mb-6 tracking-tighter italic">YEAH! MEGA ORDER!</h1>
         <p className="text-4xl font-bold mb-24 opacity-80 uppercase tracking-tight">Your fresh coffee is being prepared now.</p>
-        
         <div className="bg-white text-stone-900 p-20 rounded-[5rem] shadow-[0_50px_100px_rgba(0,0,0,0.1)] w-full max-w-2xl transform hover:scale-[1.02] transition-transform">
            <p className="text-stone-300 font-black uppercase tracking-[0.5em] mb-8 text-2xl">Your Ticket Number</p>
            <div className="text-[15rem] font-black leading-none mb-12 tracking-tighter italic text-stone-900">#{orderNum}</div>
            <div className="border-t-8 border-dotted border-stone-50 pt-12">
               <p className="text-3xl text-stone-400 font-bold mb-12">Grab your receipt below!</p>
-              <button 
-                onClick={() => { setCart([]); setStep(KioskStep.WELCOME); setPaymentMethod(null); }}
-                className="w-full py-10 bg-stone-900 text-yellow-400 rounded-[3rem] text-4xl font-black shadow-2xl hover:scale-95 transition-all"
-              >
-                CLOSE & FINISH
-              </button>
-           </div>
-        </div>
-        
-        <div className="mt-20 flex items-center gap-4 text-stone-800/40 font-black text-2xl italic tracking-tighter">
-           <span>MEGA REFRESH IN PROGRESS...</span>
-           <div className="w-48 h-2 bg-stone-800/10 rounded-full overflow-hidden">
-              <div className="h-full bg-stone-800/40 animate-[loading_15s_linear]" />
+              <button onClick={resetOrder} className="w-full py-10 bg-stone-900 text-yellow-400 rounded-[3rem] text-4xl font-black shadow-2xl hover:scale-95 transition-all">CLOSE & FINISH</button>
            </div>
         </div>
       </div>
@@ -780,11 +742,8 @@ export default function App() {
       {step === KioskStep.CHECKOUT && <CheckoutView />}
       {step === KioskStep.PAYMENT && <PaymentView />}
       {step === KioskStep.SUCCESS && <SuccessView />}
-
       {activeProduct && <CustomizationModal />}
       <PaymentMethodModal />
-
-      {/* AI Help Overlay */}
       {isHelpOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-xl" onClick={() => setIsHelpOpen(false)} />
@@ -796,69 +755,36 @@ export default function App() {
               </div>
               <button onClick={() => setIsHelpOpen(false)} className="bg-stone-50 p-6 rounded-full"><Icon name="x" className="w-8 h-8 text-stone-300" /></button>
             </div>
-
             <div className="flex-1 overflow-y-auto space-y-10 pr-4 pb-12 no-scrollbar">
               <div className="bg-stone-50 p-10 rounded-[3rem] text-3xl text-stone-800 font-bold leading-relaxed border-2 border-stone-100 shadow-sm italic">
                 "Big size, Great taste! How can I help you customize your Mega Coffee experience today?"
               </div>
-
               {helpResponse && (
                 <div className="bg-yellow-50 p-10 rounded-[3rem] border-4 border-yellow-200 text-3xl text-stone-900 animate-fade-in shadow-xl leading-relaxed font-black tracking-tight">
                   <div className="flex items-center gap-4 mb-6 text-sm font-black text-yellow-600 uppercase tracking-[0.3em]">Mega AI Barista</div>
                   {helpResponse}
                 </div>
               )}
-
               {isAIProcessing && (
-                <div className="flex justify-center py-20">
-                  <div className="w-16 h-16 border-8 border-yellow-400 border-t-transparent rounded-full animate-spin" />
-                </div>
+                <div className="flex justify-center py-20"><div className="w-16 h-16 border-8 border-yellow-400 border-t-transparent rounded-full animate-spin" /></div>
               )}
             </div>
-
             <form onSubmit={handleHelpSubmit} className="mt-auto pt-12 border-t border-stone-100">
               <div className="relative">
-                <input
-                  type="text"
-                  value={helpQuery}
-                  onChange={(e) => setHelpQuery(e.target.value)}
-                  placeholder="Ask about caffeine, calories, or recipes..."
-                  className="w-full p-10 pr-24 bg-stone-50 rounded-[3rem] text-2xl font-black text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-8 focus:ring-yellow-400/20 border-2 border-stone-100 transition-all"
-                />
-                <button 
-                  type="submit"
-                  disabled={isAIProcessing || !helpQuery.trim()}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 bg-stone-900 text-yellow-400 p-5 rounded-[2rem] shadow-2xl disabled:opacity-20 transition-all"
-                >
+                <input type="text" value={helpQuery} onChange={(e) => setHelpQuery(e.target.value)} placeholder="Ask about caffeine, calories, or recipes..." className="w-full p-10 pr-24 bg-stone-50 rounded-[3rem] text-2xl font-black text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-8 focus:ring-yellow-400/20 border-2 border-stone-100 transition-all" />
+                <button type="submit" disabled={isAIProcessing || !helpQuery.trim()} className="absolute right-6 top-1/2 -translate-y-1/2 bg-stone-900 text-yellow-400 p-5 rounded-[2rem] shadow-2xl disabled:opacity-20 transition-all">
                   <Icon name="chevronLeft" className="w-8 h-8 rotate-180" />
                 </button>
-              </div>
-              <div className="mt-8 flex flex-wrap gap-3">
-                {['Strongest coffee?', 'What is Nurung-Ji?', 'Recommend a smoothie'].map(tag => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setHelpQuery(tag)}
-                    className="px-6 py-4 bg-stone-50 text-stone-500 rounded-2xl text-lg font-black uppercase tracking-tight hover:bg-yellow-400 hover:text-stone-900 transition-colors border border-stone-100"
-                  >
-                    {tag}
-                  </button>
-                ))}
               </div>
             </form>
           </div>
         </div>
       )}
-
       <style>{`
         @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes slide-left { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes loading { from { width: 0%; } to { width: 100%; } }
-        @keyframes bounce-short { 
-          0%, 100% { transform: translateY(0); } 
-          50% { transform: translateY(-10px); } 
-        }
+        @keyframes bounce-short { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .animate-slide-up { animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         .animate-slide-left { animation: slide-left 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         .animate-fade-in { animation: fade-in 0.5s ease-out; }
