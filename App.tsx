@@ -23,6 +23,8 @@ const Icon = ({ name, className }: { name: string; className?: string }) => {
     check: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>,
     help: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     back: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
+    creditCard: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>,
+    qrCode: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>,
   };
   return icons[name] || <span>?</span>;
 };
@@ -40,6 +42,10 @@ export default function App() {
   const [helpResponse, setHelpResponse] = useState('');
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<{ productName: string; reason: string }[]>([]);
+  
+  // New state for payment flow
+  const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'CARD' | 'QPAY' | null>(null);
 
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart]);
 
@@ -49,6 +55,8 @@ export default function App() {
         setStep(KioskStep.WELCOME);
         setCart([]);
         setOrderType(null);
+        setIsPaymentMethodModalOpen(false);
+        setPaymentMethod(null);
       }
     }, 180000); // 3 minutes for kiosk
     return () => clearTimeout(timer);
@@ -95,6 +103,12 @@ export default function App() {
     setIsAIProcessing(false);
   };
 
+  const handlePaymentSelect = (method: 'CARD' | 'QPAY') => {
+    setPaymentMethod(method);
+    setIsPaymentMethodModalOpen(false);
+    setStep(KioskStep.PAYMENT);
+  };
+
   // --- Views ---
 
   const WelcomeView = () => (
@@ -133,7 +147,15 @@ export default function App() {
   );
 
   const OrderTypeView = () => (
-    <div className="h-screen w-screen bg-white flex flex-col p-12 portrait:p-20">
+    <div className="h-screen w-screen bg-white flex flex-col p-12 portrait:p-20 relative">
+      <div className="absolute top-12 left-12 portrait:top-20 portrait:left-20">
+        <button 
+          onClick={() => setStep(KioskStep.WELCOME)} 
+          className="bg-stone-50 p-6 rounded-[2rem] shadow-xl hover:bg-stone-100 transition-all active:scale-95 group border border-stone-100"
+        >
+          <Icon name="back" className="w-10 h-10 text-stone-900 group-hover:scale-110 transition-transform" />
+        </button>
+      </div>
       <div className="flex flex-col items-center mb-24">
          <img src="https://img.79plus.co.kr/megahp/common/img/new_logo_b.png" className="w-40 mb-12" />
          <h2 className="text-6xl font-black text-stone-900 tracking-tight">How would you like to enjoy?</h2>
@@ -216,34 +238,36 @@ export default function App() {
           </nav>
 
           {/* Main Grid */}
-          <main className="flex-1 p-10 overflow-y-auto bg-white">
-            <div className="flex items-end justify-between mb-10">
+          <main className="flex-1 p-8 overflow-y-auto bg-white">
+            <div className="flex items-end justify-between mb-8">
               <h2 className="text-6xl font-black text-stone-900 tracking-tighter">{selectedCategory}</h2>
               <p className="text-stone-400 font-bold text-xl">{filteredProducts.length} Items Available</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-10">
+            <div className="grid grid-cols-3 gap-8">
               {filteredProducts.map(product => (
                 <div 
                   key={product.id}
                   onClick={() => setActiveProduct(product)}
-                  className="bg-stone-50 rounded-[3rem] overflow-hidden group hover:ring-8 hover:ring-yellow-400/30 transition-all duration-300 cursor-pointer shadow-sm"
+                  className="bg-stone-50 rounded-[3rem] overflow-hidden group hover:ring-8 hover:ring-yellow-400/30 transition-all duration-300 cursor-pointer shadow-md border border-stone-100 flex flex-col"
                 >
-                  <div className="relative h-64 overflow-hidden">
+                  <div className="relative h-[24rem] overflow-hidden bg-stone-100">
                     <img src={product.image} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" alt={product.name} />
                     {product.temperature !== 'BOTH' && (
-                      <span className={`absolute top-6 left-6 px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest ${product.temperature === 'ICE' ? 'bg-blue-500 text-white' : 'bg-red-500 text-white'}`}>
+                      <span className={`absolute top-6 left-6 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ${product.temperature === 'ICE' ? 'bg-blue-500 text-white' : 'bg-red-500 text-white shadow-xl'}`}>
                         {product.temperature}
                       </span>
                     )}
+                    <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur px-3 py-1 rounded-lg shadow-sm text-stone-400 font-bold text-[11px] border border-white/40">
+                      {product.calories} CAL
+                    </div>
                   </div>
-                  <div className="p-8">
-                    <h3 className="text-3xl font-black text-stone-900 mb-2 leading-tight">{product.name}</h3>
-                    <p className="text-stone-400 text-lg font-bold uppercase tracking-tight mb-4">{product.englishName}</p>
-                    <div className="flex justify-between items-center pt-6 border-t border-stone-200">
-                      <span className="text-4xl font-black text-stone-900 tracking-tight">{formatPrice(product.price)}</span>
-                      <div className="bg-white px-4 py-2 rounded-xl shadow-inner text-stone-400 font-bold text-sm">
-                        {product.calories} CAL
+                  <div className="p-6 flex flex-col justify-between flex-1 min-h-[140px]">
+                    <h3 className="text-2xl font-black text-stone-900 mb-2 leading-tight line-clamp-2 uppercase tracking-tight">{product.name}</h3>
+                    <div className="flex justify-between items-center pt-4 border-t border-stone-200 mt-auto">
+                      <span className="text-3xl font-black text-stone-900 tracking-tighter italic">{formatPrice(product.price)}</span>
+                      <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Icon name="chevronLeft" className="w-6 h-6 rotate-180 text-stone-900" />
                       </div>
                     </div>
                   </div>
@@ -251,7 +275,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* AI Smart Recs Section */}
             {aiRecommendations.length > 0 && (
               <div className="mt-20 border-t-4 border-yellow-400 pt-12 animate-fade-in">
                 <div className="flex items-center gap-4 mb-10">
@@ -283,7 +306,6 @@ export default function App() {
           </main>
         </div>
 
-        {/* Footer Cart Bar */}
         <footer className="bg-stone-900 p-10 flex items-center justify-between shadow-2xl z-30">
           <div className="flex items-center gap-12">
             <div className="relative bg-white/10 p-6 rounded-3xl">
@@ -361,7 +383,6 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-1 gap-16">
-            {/* Temp Selection if BOTH */}
             {activeProduct.temperature === 'BOTH' && (
               <section>
                 <h3 className="text-3xl font-black text-stone-900 mb-8 flex items-center gap-4">Temperature</h3>
@@ -378,7 +399,6 @@ export default function App() {
               </section>
             )}
 
-            {/* Size selection */}
             <section>
               <h3 className="text-3xl font-black text-stone-900 mb-8">Select Your Size</h3>
               <div className="grid grid-cols-3 gap-8">
@@ -396,7 +416,6 @@ export default function App() {
               </div>
             </section>
 
-            {/* Condiments */}
             <div className="grid grid-cols-2 gap-16">
               <section>
                 <h3 className="text-2xl font-black text-stone-900 mb-6">Milk Choice</h3>
@@ -428,7 +447,6 @@ export default function App() {
               </section>
             </div>
 
-            {/* Add-ons */}
             <section>
               <h3 className="text-2xl font-black text-stone-900 mb-8">Add Extra Flavor</h3>
               <div className="grid grid-cols-2 gap-6">
@@ -478,6 +496,60 @@ export default function App() {
     );
   };
 
+  const PaymentMethodModal = () => {
+    if (!isPaymentMethodModalOpen) return null;
+
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-stone-900/90 backdrop-blur-xl animate-fade-in px-12">
+        <div className="bg-white w-full max-w-4xl rounded-[4rem] p-16 shadow-2xl animate-slide-up flex flex-col gap-12 relative overflow-hidden">
+           {/* Background branding */}
+           <div className="absolute -top-32 -left-32 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl" />
+           <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-stone-900/5 rounded-full blur-3xl" />
+
+           <div className="text-center">
+              <h2 className="text-6xl font-black text-stone-900 mb-4 tracking-tighter">SELECT PAYMENT</h2>
+              <p className="text-2xl text-stone-400 font-bold uppercase tracking-widest">Choose your preferred method</p>
+           </div>
+
+           <div className="grid grid-cols-2 gap-8 mt-4">
+              <button 
+                onClick={() => handlePaymentSelect('CARD')}
+                className="group p-12 bg-stone-50 border-4 border-stone-100 rounded-[3rem] hover:border-yellow-400 hover:bg-yellow-50 transition-all duration-300 flex flex-col items-center gap-8 shadow-xl active:scale-95"
+              >
+                <div className="w-32 h-32 bg-stone-900 rounded-[1.5rem] flex items-center justify-center group-hover:bg-yellow-400 transition-colors shadow-lg">
+                   <Icon name="creditCard" className="w-16 h-16 text-yellow-400 group-hover:text-stone-900" />
+                </div>
+                <div className="text-center">
+                   <span className="text-4xl font-black text-stone-900 block mb-2">Pay by card</span>
+                   <p className="text-lg text-stone-400 font-bold">Visa, MasterCard, etc.</p>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => handlePaymentSelect('QPAY')}
+                className="group p-12 bg-stone-50 border-4 border-stone-100 rounded-[3rem] hover:border-yellow-400 hover:bg-yellow-50 transition-all duration-300 flex flex-col items-center gap-8 shadow-xl active:scale-95"
+              >
+                <div className="w-32 h-32 bg-stone-900 rounded-[1.5rem] flex items-center justify-center group-hover:bg-yellow-400 transition-colors shadow-lg">
+                   <Icon name="qrCode" className="w-16 h-16 text-yellow-400 group-hover:text-stone-900" />
+                </div>
+                <div className="text-center">
+                   <span className="text-4xl font-black text-stone-900 block mb-2">Pay via QPay</span>
+                   <p className="text-lg text-stone-400 font-bold">Scan bank QR code</p>
+                </div>
+              </button>
+           </div>
+
+           <button 
+             onClick={() => setIsPaymentMethodModalOpen(false)}
+             className="mt-4 w-full py-6 text-stone-400 font-black text-xl hover:text-stone-900 transition-colors uppercase tracking-widest"
+           >
+             Go Back
+           </button>
+        </div>
+      </div>
+    );
+  };
+
   const CheckoutView = () => (
     <div className="h-screen w-screen flex flex-col bg-stone-50 p-12 portrait:p-20 overflow-hidden font-sans">
        <div className="flex justify-between items-center mb-16">
@@ -488,8 +560,7 @@ export default function App() {
         <div className="w-20" />
       </div>
 
-      <div className="flex-1 flex gap-12 overflow-hidden">
-        {/* List */}
+      <div className="flex-1 flex flex-col gap-10 overflow-hidden">
         <div className="flex-1 overflow-y-auto pr-6 space-y-8 no-scrollbar">
           {cart.map(item => (
             <div key={item.id} className="bg-white rounded-[3rem] p-10 flex gap-10 shadow-xl border border-stone-100 animate-fade-in">
@@ -534,41 +605,44 @@ export default function App() {
             </div>
           ))}
           {cart.length === 0 && (
-             <div className="h-full flex flex-col items-center justify-center opacity-10">
+             <div className="h-full flex flex-col items-center justify-center opacity-10 py-32">
                 <Icon name="cart" className="w-64 h-64 mb-12" />
                 <p className="text-7xl font-black uppercase italic">Basket Empty</p>
              </div>
           )}
         </div>
 
-        {/* Sidebar Summary */}
-        <div className="w-[550px] flex flex-col gap-10">
-           <div className="bg-stone-900 rounded-[4rem] p-16 shadow-2xl flex flex-col flex-1 relative overflow-hidden">
+        <div className="w-full">
+           <div className="bg-stone-900 rounded-[4rem] p-12 shadow-2xl flex flex-col relative overflow-hidden">
               <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
-              <h3 className="text-4xl font-black text-white italic tracking-tighter mb-12 border-b-2 border-white/10 pb-10 uppercase">Order Summary</h3>
-              <div className="space-y-8 flex-1">
-                <div className="flex justify-between text-3xl font-bold text-white/40">
-                  <span>Subtotal</span>
-                  <span className="text-white">{formatPrice(cartTotal)}</span>
-                </div>
-                <div className="flex justify-between text-3xl font-bold text-white/40">
-                  <span>Tax (10%)</span>
-                  <span className="text-white">{formatPrice(Math.round(cartTotal * 0.1))}</span>
+              <div className="flex justify-between items-center mb-10 border-b-2 border-white/10 pb-8">
+                <h3 className="text-4xl font-black text-white italic tracking-tighter uppercase">Order Summary</h3>
+                <div className="flex flex-col items-end">
+                  <span className="text-sm font-black text-white/40 uppercase tracking-[0.4em] mb-1">Final Total</span>
+                  <span className="text-7xl font-black text-yellow-400 italic tracking-tighter leading-none">{formatPrice(Math.round(cartTotal * 1.1))}</span>
                 </div>
               </div>
-              <div className="pt-12 mt-12">
-                <div className="flex flex-col items-end mb-16">
-                  <span className="text-xl font-black text-yellow-400 uppercase tracking-[0.4em] mb-4">Final Amount</span>
-                  <span className="text-9xl font-black text-yellow-400 italic tracking-tighter drop-shadow-lg leading-none">{formatPrice(Math.round(cartTotal * 1.1))}</span>
+              
+              <div className="flex gap-12 items-center">
+                <div className="flex-1 space-y-3">
+                  <div className="flex justify-between text-2xl font-bold text-white/30">
+                    <span>Subtotal</span>
+                    <span className="text-white/60">{formatPrice(cartTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-2xl font-bold text-white/30">
+                    <span>Tax (10%)</span>
+                    <span className="text-white/60">{formatPrice(Math.round(cartTotal * 0.1))}</span>
+                  </div>
                 </div>
+                
                 <button 
                   disabled={cart.length === 0}
-                  onClick={() => setStep(KioskStep.PAYMENT)}
-                  className="w-full py-10 bg-yellow-400 text-stone-900 rounded-[2.5rem] text-4xl font-black shadow-[0_20px_60px_rgba(253,208,0,0.4)] hover:bg-yellow-500 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-6"
+                  onClick={() => setIsPaymentMethodModalOpen(true)}
+                  className="px-20 py-8 bg-yellow-400 text-stone-900 rounded-[2.5rem] text-3xl font-black shadow-[0_20px_60px_rgba(253,208,0,0.4)] hover:bg-yellow-500 transition-all active:scale-95 disabled:opacity-20 flex items-center justify-center gap-6"
                 >
-                  PAY WITH CARD
-                  <div className="w-12 h-12 bg-stone-900/10 rounded-xl flex items-center justify-center">
-                    <Icon name="chevronLeft" className="w-8 h-8 rotate-180" />
+                  MAKE PAYMENT
+                  <div className="w-10 h-10 bg-stone-900/10 rounded-xl flex items-center justify-center">
+                    <Icon name="chevronLeft" className="w-6 h-6 rotate-180" />
                   </div>
                 </button>
               </div>
@@ -580,45 +654,76 @@ export default function App() {
 
   const PaymentView = () => {
     useEffect(() => {
+      // Simulate payment success after 4s
       const timer = setTimeout(() => {
         setStep(KioskStep.SUCCESS);
-      }, 4000);
+      }, 5000);
       return () => clearTimeout(timer);
     }, []);
+
+    const isCard = paymentMethod === 'CARD';
 
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-white p-20 text-center font-sans overflow-hidden">
         <div className="absolute inset-0 bg-yellow-400/5 -z-10" />
         <div className="mb-24 space-y-6">
           <div className="bg-yellow-400 w-32 h-32 rounded-[2rem] flex items-center justify-center mx-auto mb-12 animate-bounce-short shadow-xl">
-             <Icon name="cart" className="w-16 h-16 text-stone-900" />
+             <Icon name={isCard ? "creditCard" : "qrCode"} className="w-16 h-16 text-stone-900" />
           </div>
-          <h2 className="text-7xl font-black text-stone-900 tracking-tighter italic">WAITING FOR PAYMENT...</h2>
-          <p className="text-3xl text-stone-400 font-bold uppercase tracking-widest">Please tap your card or use mobile pay</p>
+          <h2 className="text-7xl font-black text-stone-900 tracking-tighter italic uppercase">
+            {isCard ? 'Waiting for card...' : 'Scan to pay'}
+          </h2>
+          <p className="text-3xl text-stone-400 font-bold uppercase tracking-widest">
+            {isCard ? 'Please tap your card or use mobile pay' : 'Open your bank app and scan the QR code'}
+          </p>
         </div>
         
-        {/* Modern Kiosk Terminal Mockup */}
-        <div className="relative w-96 h-[600px] bg-stone-900 rounded-[4rem] border-[12px] border-stone-800 shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col items-center p-12 overflow-hidden animate-slide-up">
-          <div className="w-24 h-3 bg-stone-800 rounded-full mb-16" />
-          <div className="w-full bg-stone-800/50 rounded-3xl p-10 flex flex-col items-center justify-center border-2 border-white/5 h-64 shadow-inner">
-             <div className="w-20 h-20 border-8 border-yellow-400 border-t-transparent rounded-full animate-spin mb-8" />
-             <p className="text-yellow-400 font-black tracking-[0.3em] text-2xl animate-pulse uppercase italic">Verifying</p>
+        {isCard ? (
+          /* Modern Kiosk Terminal Mockup */
+          <div className="relative w-96 h-[600px] bg-stone-900 rounded-[4rem] border-[12px] border-stone-800 shadow-[0_50px_100px_rgba(0,0,0,0.4)] flex flex-col items-center p-12 overflow-hidden animate-slide-up">
+            <div className="w-24 h-3 bg-stone-800 rounded-full mb-16" />
+            <div className="w-full bg-stone-800/50 rounded-3xl p-10 flex flex-col items-center justify-center border-2 border-white/5 h-64 shadow-inner">
+               <div className="w-20 h-20 border-8 border-yellow-400 border-t-transparent rounded-full animate-spin mb-8" />
+               <p className="text-yellow-400 font-black tracking-[0.3em] text-2xl animate-pulse uppercase italic">Verifying</p>
+            </div>
+            <div className="mt-20 w-full flex flex-col gap-6 opacity-30">
+               <div className="h-4 bg-stone-700 rounded-full w-full" />
+               <div className="h-4 bg-stone-700 rounded-full w-3/4" />
+            </div>
+            <div className="absolute bottom-16 flex gap-3">
+               <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
+               <div className="w-3 h-3 bg-green-500 rounded-full" />
+            </div>
           </div>
-          <div className="mt-20 w-full flex flex-col gap-6 opacity-30">
-             <div className="h-4 bg-stone-700 rounded-full w-full" />
-             <div className="h-4 bg-stone-700 rounded-full w-3/4" />
+        ) : (
+          /* QPay QR Code Simulation */
+          <div className="flex flex-col items-center gap-12">
+            <div className="bg-white p-12 rounded-[3rem] shadow-[0_30px_80px_rgba(0,0,0,0.1)] border-8 border-stone-50 animate-fade-in">
+              <img 
+                src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=MEGACOFFEE_ORDER_123&bgcolor=ffffff&color=231f20" 
+                className="w-80 h-80 rounded-2xl grayscale contrast-125" 
+                alt="Payment QR" 
+              />
+            </div>
+            <div className="bg-stone-900 text-yellow-400 px-12 py-6 rounded-full text-4xl font-black italic tracking-tighter shadow-xl animate-pulse">
+              {formatPrice(Math.round(cartTotal * 1.1))}
+            </div>
           </div>
-          <div className="absolute bottom-16 flex gap-3">
-             <div className="w-3 h-3 bg-green-500 rounded-full animate-ping" />
-             <div className="w-3 h-3 bg-green-500 rounded-full" />
-          </div>
-        </div>
+        )}
 
         <div className="mt-24 flex gap-12 items-center opacity-40">
            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" className="h-8 object-contain" />
            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/MasterCard_Logo.svg/2560px-MasterCard_Logo.svg.png" className="h-12 object-contain" />
-           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Pay_logo.svg/2560px-Apple_Pay_logo.svg.png" className="h-10 object-contain" />
+           {isCard && <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Apple_Pay_logo.svg/2560px-Apple_Pay_logo.svg.png" className="h-10 object-contain" />}
+           {!isCard && <div className="text-2xl font-black text-stone-900 italic tracking-tighter">QPAY SECURE</div>}
         </div>
+        
+        <button 
+          onClick={() => setStep(KioskStep.CHECKOUT)} 
+          className="mt-16 text-stone-300 font-black uppercase tracking-widest text-xl hover:text-stone-900"
+        >
+          Cancel Payment
+        </button>
       </div>
     );
   };
@@ -630,6 +735,7 @@ export default function App() {
       const timer = setTimeout(() => {
         setCart([]);
         setStep(KioskStep.WELCOME);
+        setPaymentMethod(null);
       }, 15000);
       return () => clearTimeout(timer);
     }, []);
@@ -648,7 +754,7 @@ export default function App() {
            <div className="border-t-8 border-dotted border-stone-50 pt-12">
               <p className="text-3xl text-stone-400 font-bold mb-12">Grab your receipt below!</p>
               <button 
-                onClick={() => { setCart([]); setStep(KioskStep.WELCOME); }}
+                onClick={() => { setCart([]); setStep(KioskStep.WELCOME); setPaymentMethod(null); }}
                 className="w-full py-10 bg-stone-900 text-yellow-400 rounded-[3rem] text-4xl font-black shadow-2xl hover:scale-95 transition-all"
               >
                 CLOSE & FINISH
@@ -676,6 +782,7 @@ export default function App() {
       {step === KioskStep.SUCCESS && <SuccessView />}
 
       {activeProduct && <CustomizationModal />}
+      <PaymentMethodModal />
 
       {/* AI Help Overlay */}
       {isHelpOpen && (
